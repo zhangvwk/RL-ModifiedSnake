@@ -10,7 +10,7 @@ Requires pygame.
 To see the agent train, run:
 
 ```
-python main.py
+$ python main.py
 ```
 
 Parameters can be tuned in 
