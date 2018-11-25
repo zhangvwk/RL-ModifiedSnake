@@ -1,17 +1,7 @@
 from initialization import *
 from environment import *
 
-
-def SigNum(x):
-	if x < 0:
-		return -1
-	if x > 0:
-		return 1
-	else:
-		return 0
-
 def GetQuadrant(coord):
-	# (sign_x, sign_y) = (SigNum(coord[0]), SigNum(coord[1]))
 	x, y = coord
 	if x == 0:
 		qx = 0
@@ -30,7 +20,7 @@ def GetQuadrant(coord):
 	return (qx, qy)
 
 def TransformQuadrantBasedOnDirection(coord, direction):
-	# Transform it relative to the snake
+	# Rotate the quadrant value given direction
 	(x, y) = coord
 
 	if direction == Directions.LEFT:
@@ -43,7 +33,6 @@ def TransformQuadrantBasedOnDirection(coord, direction):
 	return GetQuadrant((x, y))
 
 def MoveInDirection(square, direction):
-	""" Returns the given square moved in the given direction. """
 	(x, y) = square
 	if direction == Directions.UP:
 		return (x, y - pixel)
@@ -56,7 +45,7 @@ def MoveInDirection(square, direction):
 
 class QuadrantView:
 	def __SquareDescription(self, snakeCoord_X, snakeCoord_Y, applePos, blockPos, square):
-		""" Returns -1 if the square is a wall, snake_position, or a corner.
+		""" Returns -1 if the square is a wall, snake_position, or a block.
 			Returns 1 if it is a fruit. 0 otherwise."""
 		snakeCoord = zip(snakeCoord_X, snakeCoord_Y)
 		if square in blockPos:
