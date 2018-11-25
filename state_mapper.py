@@ -11,18 +11,18 @@ def SigNum(x):
 		return 0
 
 def GetQuadrant(coord):
-	(sign_x, sign_y) = (SigNum(coord[0]), SigNum(coord[1]))
-
-	if sign_x == 0:
+	# (sign_x, sign_y) = (SigNum(coord[0]), SigNum(coord[1]))
+	x, y = coord
+	if x == 0:
 		qx = 0
-	elif sign_x == 1:
+	elif x > 0:
 		qx = 1
 	else:
 		qx = -1
 
-	if sign_y == 0:
+	if y == 0:
 		qy = 0
-	elif sign_y == 1:
+	elif y > 0:
 		qy = 1
 	else:
 		qy = -1

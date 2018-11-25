@@ -66,13 +66,13 @@ while True:
 
 		if count % 500 == 0:
 			epsilon -= float(epsilon)/2
-			print epsilon
+			# print epsilon
 			count = 1
 
 		if epsilon < 0:
 			epsilon = 0
 
-		if highestScore > 15:
+		if highestScore > 30:
 			clock.tick(20)
 		# Computing the average score
 		if len(scoreList) < 2:
@@ -111,7 +111,8 @@ while True:
 			count += 1
 			timeStart = time.clock()
 			currentTime = time.clock()
-			
+			blockPos, possiblePos_X, possiblePos_Y = Block(numBlocks).unoccupied()
+
 		# Snake eats an apple
 		if snakeLogic.eatsApple():
 			score += 1
