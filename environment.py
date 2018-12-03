@@ -16,14 +16,19 @@ class Setup:
 	# Initial snake coordinates from head to tail
 	snakeCoord_X = [140, 140, 140]
 	snakeCoord_Y = [200, 180, 160]
-	numIters = 100000
-	timeLimit = 1000000
-	# Initial direction
-	direction = random.choice(Directions.ALL)
+
+	trainIters = 50000
+	testIters = 1000
+	training_timeLimit = float('inf')
+	testing_timeLimit = 15*60
+
+	direction = random.choice(Directions.ALL) # Initial direction
+	
 	# Learning parameters
 	discount = 0.9
 	alpha = 0.8
-	epsilon = 0.1
+	epsilon_u = 0.0
+	epsilon_l = 0.01 # epsilon lower bound
 
 class Block:
 	def __init__(self, numBlocks):
@@ -32,14 +37,22 @@ class Block:
 	# Returns list of block-unoccupied x and y coordinates
 	def unoccupied(self):
 		numBlocks = self.numBlocks
-		blockPos_normalized = [(random.randint(1, int_width), random.randint(1, int_height)) for i in range(numBlocks)]
-		# blockPos_normalized = [(7, 13), (1, 4), (14, 9), (2, 5), (13, 6), (1, 13), (2, 9), (9, 6), (14, 2), (9, 1), (14, 2), (8, 12), (13, 1), (13, 12), (5, 11), (4, 2), (3, 4), (12, 6), (14, 13), (3, 6)]
-		# blockPos_normalized = [(1000,1000),(1000,1000),(1000,1000),(1000,1000),(1000,1000),(1000,1000),(1000,1000),(1000,1000),(1000,1000),(1000,1000),(1000,1000),(1000,1000),(1000,1000),(1000,1000),]
-		blockPos = [(blockPos_normalized[i][0]*pixel, blockPos_normalized[i][1]*pixel) for i in range(numBlocks)]
+
+		blockPos_normalized = [(random.randint(1, int_width), \
+								random.randint(1, int_height)) \
+								for i in range(numBlocks)]
+
+		blockPos = [(blockPos_normalized[i][0]*pixel, \
+					blockPos_normalized[i][1]*pixel) \
+					for i in range(numBlocks)]
+
 		blockPos_X = set(blockPos_normalized[i][0] for i in range(numBlocks))
 		blockPos_Y = set(blockPos_normalized[i][1] for i in range(numBlocks))
+
+		# X and Y coordinates that are block-unoccupied
 		possiblePos_X = list(set(i for i in range(int_width)) - blockPos_X)
 		possiblePos_Y = list(set(i for i in range(int_height)) - blockPos_Y)
+
 		return blockPos, possiblePos_X, possiblePos_Y
 
 class Apple:
@@ -55,11 +68,16 @@ class Apple:
 		possiblePos_Y = self.possiblePos_Y
 		snakeCoord_X = self.snakeCoord_X
 		snakeCoord_Y = self.snakeCoord_Y
-		# applePos = (random.choice(possiblePos_X)*pixel, random.choice(possiblePos_Y)*pixel)
 		while True:
-			applePos = (random.choice(possiblePos_X)*pixel, random.choice(possiblePos_Y)*pixel)
+
+			# Apple position taken randomly in block-unoccupied tiles
+			applePos = (random.choice(possiblePos_X)*pixel, \
+						random.choice(possiblePos_Y)*pixel)
+
+			# Apple cannot appear somewhere on the snake
 			if applePos not in zip(snakeCoord_X, snakeCoord_Y):
 				break
+		
 		return applePos
 
 class GameLogic:
@@ -73,13 +91,15 @@ class GameLogic:
 		snakeHead_X = self.snakeHead_X
 		snakeHead_Y = self.snakeHead_Y 
 		# print 'hit wall'
-		return snakeHead_X < 0 or snakeHead_X >= windowWidth or snakeHead_Y < 0 or snakeHead_Y >= windowHeight
+		return snakeHead_X < 0 or \
+				snakeHead_X >= windowWidth or \
+				snakeHead_Y < 0 or \
+				snakeHead_Y >= windowHeight
 
 	def collisionObstacle(self):
 		obstaclePos = self.obstaclePos
 		snakeHead_X = self.snakeHead_X
 		snakeHead_Y = self.snakeHead_Y
-		# print 'hit block'
 		return (snakeHead_X, snakeHead_Y) in obstaclePos
 
 	def eatsApple(self):

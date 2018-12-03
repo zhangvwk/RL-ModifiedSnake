@@ -1,6 +1,7 @@
 from environment import *
 import state_mapper as smp
 import collections 
+from numpy.random import choice
 
 QuadrantView = smp.QuadrantView()
 
@@ -34,15 +35,28 @@ class QLearningAlgorithm:
 
 	# Epsilon-greedy exploration strategy
 	def getAction(self, epsilon, mapped_state, QValues):
+
+		# Initialize Q values at 0
 		if mapped_state not in QValues.keys():
 			QValues[mapped_state] = {}
 			for action_ in self.actions():
-				QValues[mapped_state][action_] = 10 # initially optimistic
+				QValues[mapped_state][action_] = 10
 
 		if random.random() < epsilon:
 			return random.choice(self.actions())
 		else:
-			return max((self.getQ(mapped_state, action, QValues), action) for action in self.actions())[1]
+			return max((self.getQ(mapped_state, action, QValues), action) \
+									for action in self.actions())[1]
+
+		# SOFTMAX NOT WORKING
+		# T = 3
+		# SUM = sum([float(math.exp(self.getQ(mapped_state, action, QValues)))/T \
+		# 			for action in self.actions()])
+		# prob = [float((float(math.exp(self.getQ(mapped_state, action, QValues)))/T))/SUM for action in self.actions()]
+		# draw = choice(prob)
+		# action_idx = prob.index(draw)
+		# return self.actions()[action_idx]
+
 
 	def getReward(self, state, action):
 		blockPos = self.blockPos
@@ -114,17 +128,32 @@ class QLearningAlgorithm:
 
 		q = QValues[mapped_state][action]
 
+		# If snake dies
 		if reward == -100:
 			q += alpha * (reward - q)
+
 		else:
 			new_state = self.getState(state, action)
 			move = QuadrantView.TransformMove(action, direction)
-			new_mapped_state = QuadrantView.TransformState(new_state[0], new_state[1], new_state[2], blockPos, move)
+			new_mapped_state = QuadrantView.TransformState(new_state[0], new_state[1], \
+																										new_state[2], blockPos, move)
+
+			# Initialize Q values at 0
 			if new_mapped_state not in QValues.keys():
 				QValues[new_mapped_state] = {}
 				for newAction in self.actions():
 					QValues[new_mapped_state][newAction] = 10
+
+			# Off-policy
 			max_q = max(QValues[new_mapped_state].values())
+
+			# Temporal difference
 			q += alpha*(reward + discount*max_q - q)
 
 		QValues[mapped_state][action] = q 
+
+	def writePolicy(self, QValues, epsilon_u):
+		policyFile = 'QL_' + str(epsilon_u) + '.policy'
+		with open(policyFile, 'w') as f:
+			f.write(str(QValues))
+		return
