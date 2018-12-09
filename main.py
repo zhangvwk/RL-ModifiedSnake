@@ -86,10 +86,7 @@ with open(file, 'wb') as csvfile:
 		# Reset frame and initial conditions when time's up
 		frame = 1
 		currentTime = time.clock()
-		x_snake, y_snake, direction, score = [140, 140, 140], \
-												[200, 180, 160], \
-												'DOWN', \
-												0
+		x_snake, y_snake, direction, score = [140, 140, 140], [200, 180, 160], 'DOWN', 0
 
 		# While time's not up
 		while frame < timeLimit:
@@ -166,10 +163,8 @@ with open(file, 'wb') as csvfile:
 															quotechar='|', quoting=csv.QUOTE_MINIMAL)
 				filewriter.writerow([iteration, score, epsilon, averageScore, timeout])
 				
-				x_snake, y_snake, direction, score = [140, 140, 140], \
-																						[200, 180, 160], \
-																						'DOWN', \
-																						0
+				x_snake, y_snake, direction, score = [140, 140, 140], [200, 180, 160], 'DOWN', 0
+
 				iteration += 1
 				count += 1
 				timeStart = time.clock()
@@ -245,5 +240,5 @@ with open(file, 'wb') as csvfile:
 		scoreList.append(score)
 		iteration += 1
 		count += 1
-		
+
 pygame.time.wait(1000)
