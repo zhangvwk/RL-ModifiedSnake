@@ -32,4 +32,4 @@ This is the snake training using Q-Learning with an exploration probability of 0
 ### Testing
 
 Slowed down after 5000 iterations:
-![](ql_5000_0.gif)
+![](ql_training_0.gif)
