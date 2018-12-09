@@ -31,5 +31,5 @@ This is the snake training using Q-Learning with an exploration probability of 0
 
 ### Testing
 
-This is the snake training using Q-Learning with an exploration probability of 0.0:
+Slowed down:
 ![](ql_training_0.gif)
