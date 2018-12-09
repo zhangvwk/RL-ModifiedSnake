@@ -29,7 +29,5 @@ initialization.py
 This is the snake training using Q-Learning with an exploration probability of 0.0:
 ![](ql_training_0.gif)
 
-### Testing
-
 Slowed down:<br/>
-![](ql_training_0.gif)
+![](ql_5000_0.gif)
