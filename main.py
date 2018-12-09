@@ -87,9 +87,9 @@ with open(file, 'wb') as csvfile:
 		frame = 1
 		currentTime = time.clock()
 		x_snake, y_snake, direction, score = [140, 140, 140], \
-																				[200, 180, 160], \
-																				'DOWN', \
-																				0
+												[200, 180, 160], \
+												'DOWN', \
+												0
 
 		# While time's not up
 		while frame < timeLimit:
@@ -102,11 +102,11 @@ with open(file, 'wb') as csvfile:
 					break
 			if iteration > 5000:
 				clock.tick(fps)
-			# print Q
 			
 			# Decay epsilon 
 			if count % 500 == 0:
-				epsilon -= float(epsilon)/20
+				# Divide it by 2 every 500 iterations
+				epsilon -= float(epsilon)/2
 				count = 1
 
 			# Lower bound epsilon by epsilon_l if epsilon is not 0
@@ -174,6 +174,7 @@ with open(file, 'wb') as csvfile:
 				count += 1
 				timeStart = time.clock()
 				currentTime = time.clock()
+				# Reset the blocks positions
 				blockPos, possiblePos_X, possiblePos_Y = Block(numBlocks).unoccupied()
 				frame = 1
 				
@@ -182,8 +183,9 @@ with open(file, 'wb') as csvfile:
 				score += 1
 				x_snake.append(0)
 				y_snake.append(0)
-				# A new apple appears randomly
+				# Reset the apple position
 				applePos = Apple(possiblePos_X, possiblePos_Y, x_snake, y_snake).position()
+
 			# Update the snake tail coordinates
 			i = len(x_snake) - 1
 			while i >= 1:
@@ -238,9 +240,10 @@ with open(file, 'wb') as csvfile:
 
 		if highestScore < score:
 			highestScore = score
-		print 'timeout'
+
 		timeout += 1
 		scoreList.append(score)
 		iteration += 1
 		count += 1
+		
 pygame.time.wait(1000)
