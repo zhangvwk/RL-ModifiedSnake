@@ -23,3 +23,4 @@ and
 ```
 initialization.py
 ```
+![](ql_training_0.gif)
