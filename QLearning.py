@@ -9,7 +9,6 @@ class QLearningAlgorithm:
 	def __init__(self, discount, alpha, blockPos):
 		self.alpha = alpha
 		self.discount = discount
-		# self.epsilon = epsilon
 		self.blockPos = blockPos
 
 	def hypoSnakeHead(self, state, move):
@@ -40,7 +39,7 @@ class QLearningAlgorithm:
 		if mapped_state not in QValues.keys():
 			QValues[mapped_state] = {}
 			for action_ in self.actions():
-				QValues[mapped_state][action_] = 10
+				QValues[mapped_state][action_] = 0
 
 		if random.random() < epsilon:
 			return random.choice(self.actions())
@@ -142,7 +141,7 @@ class QLearningAlgorithm:
 			if new_mapped_state not in QValues.keys():
 				QValues[new_mapped_state] = {}
 				for newAction in self.actions():
-					QValues[new_mapped_state][newAction] = 10
+					QValues[new_mapped_state][newAction] = 0
 
 			# Off-policy
 			max_q = max(QValues[new_mapped_state].values())
