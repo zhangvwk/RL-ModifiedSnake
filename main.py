@@ -120,7 +120,7 @@ with open(file, 'wb') as csvfile:
 			# Observe state
 			state = (x_snake, y_snake, applePos, direction)
 			QuadrantView = smp.QuadrantView()
-			mapped_state = QuadrantView.TransformState(x_snake, y_snake, applePos, blockPos, direction)
+			mapped_state = QuadrantView.mapState(x_snake, y_snake, applePos, blockPos, direction)
 
 			# If we want to train the agent
 			if training:
@@ -141,7 +141,7 @@ with open(file, 'wb') as csvfile:
 				action = rl.getAction(epsilon, mapped_state, Q)
 
 			initial = False
-			move = QuadrantView.TransformMove(action, direction)
+			move = QuadrantView.relativeMove(action, direction)
 
 			direction = move
 
@@ -161,7 +161,7 @@ with open(file, 'wb') as csvfile:
 				# Update the score and iteration in the .csv file
 				filewriter = csv.writer(csvfile, delimiter=',',
 															quotechar='|', quoting=csv.QUOTE_MINIMAL)
-				filewriter.writerow([iteration, score, epsilon, averageScore, timeout])
+				filewriter.writerow([iteration, score, epsilon, averageScore])
 				
 				x_snake, y_snake, direction, score = [140, 140, 140], [200, 180, 160], 'DOWN', 0
 
@@ -231,12 +231,10 @@ with open(file, 'wb') as csvfile:
 
 			pygame.display.update()
 			frame += 1
-			timeout = 0
 
 		if highestScore < score:
 			highestScore = score
 
-		timeout += 1
 		scoreList.append(score)
 		iteration += 1
 		count += 1

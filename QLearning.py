@@ -31,7 +31,7 @@ class QLearningAlgorithm:
 		return (snakeHead_X, snakeHead_Y)
 
 	def actions(self):
-		return QuadrantView.GetAllowedMoves()
+		return QuadrantView.validMoves()
 
 	# Epsilon-greedy exploration strategy
 	def getAction(self, epsilon, mapped_state, QValues):
@@ -62,7 +62,7 @@ class QLearningAlgorithm:
 		blockPos = self.blockPos
 
 		x_snake, y_snake, applePos, direction = state
-		move = QuadrantView.TransformMove(action, direction)
+		move = QuadrantView.relativeMove(action, direction)
 		snakeHead_X, snakeHead_Y = self.hypoSnakeHead(state, move)
 		snakeLogic = GameLogic(applePos, blockPos, snakeHead_X, snakeHead_Y)
 
@@ -93,7 +93,7 @@ class QLearningAlgorithm:
 
 	def getState(self, state, action):
 		direction = state[3]
-		move = QuadrantView.TransformMove(action, direction)
+		move = QuadrantView.relativeMove(action, direction)
 		x_snake, y_snake = state[0:2]
 		x_snakeCopy, y_snakeCopy = x_snake[:], y_snake[:]
 
@@ -134,8 +134,8 @@ class QLearningAlgorithm:
 
 		else:
 			new_state = self.getState(state, action)
-			move = QuadrantView.TransformMove(action, direction)
-			new_mapped_state = QuadrantView.TransformState(new_state[0], new_state[1], \
+			move = QuadrantView.relativeMove(action, direction)
+			new_mapped_state = QuadrantView.mapState(new_state[0], new_state[1], \
 																										new_state[2], blockPos, move)
 
 			# Initialize Q values at 0

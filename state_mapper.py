@@ -1,26 +1,21 @@
 from initialization import *
 from environment import *
 
-def GetQuadrant(coord):
-	x, y = coord
-	if x == 0:
-		qx = 0
-	elif x > 0:
-		qx = 1
-	else:
-		qx = -1
+def quadrant(coord):
+	# Get the quadrant of coord = (x,y)
+	q = [0, 0]
+	for i in range(2):
+		if coord[i] == 0:
+			q[i] = 0
+		elif coord[i] > 0:
+			q[i] = 1
+		else:
+			q[i] = -1
 
-	if y == 0:
-		qy = 0
-	elif y > 0:
-		qy = 1
-	else:
-		qy = -1
+	return (q[0], q[1])
 
-	return (qx, qy)
-
-def TransformQuadrantBasedOnDirection(coord, direction):
-	# Rotate the quadrant value given direction
+def relativeQuadrant(coord, direction):
+	# Get the relative quadrants given direction
 	(x, y) = coord
 
 	if direction == Directions.LEFT:
@@ -30,9 +25,9 @@ def TransformQuadrantBasedOnDirection(coord, direction):
 	if direction == Directions.DOWN:
 		(x, y) = (-x, -y)
 
-	return GetQuadrant((x, y))
+	return quadrant((x, y))
 
-def MoveInDirection(square, direction):
+def hypoSquare(square, direction):
 	(x, y) = square
 	if direction == Directions.UP:
 		return (x, y - pixel)
@@ -48,9 +43,8 @@ class QuadrantView:
 		""" Returns -1 if the square is a wall, snake_position, or a block.
 			Returns 1 if it is a fruit. 0 otherwise."""
 		snakeCoord = zip(snakeCoord_X, snakeCoord_Y)
-		if square in blockPos:
-			return -1
-		if square in snakeCoord:
+
+		if square in blockPos or square in snakeCoord:
 			return -1
 
 		(x, y) = square
@@ -64,29 +58,29 @@ class QuadrantView:
 
 		return 0
 
-	def TransformState(self, snakeCoord_X, snakeCoord_Y, applePos, blockPos, direction):
+	def mapState(self, snakeCoord_X, snakeCoord_Y, applePos, blockPos, direction):
 		head = (snakeCoord_X[0], snakeCoord_Y[0])
 
 		square_description = []
-		for move in self.GetAllowedMoves():
-			transformed_direction = self.TransformMove(move, direction)
-			n = MoveInDirection(head, transformed_direction)
+		for move in self.validMoves():
+			transformed_direction = self.relativeMove(move, direction)
+			n = hypoSquare(head, transformed_direction)
 			square_description.append(self.__SquareDescription(snakeCoord_X, snakeCoord_Y, applePos, blockPos, n))
 		head_ = (head[0], - head[1])
 		applePos_ = (applePos[0], - applePos[1])
 
 		(x, y) = (applePos_[0] - head_[0], applePos_[1] - head_[1])
 
-		(qx, qy) = TransformQuadrantBasedOnDirection((x, y), direction)
+		(qx, qy) = relativeQuadrant((x, y), direction)
 
 		mapped_state = (square_description[0], square_description[1], square_description[2], qx, qy)
 
 		return mapped_state
 
-	def GetAllowedMoves(self):
+	def validMoves(self):
 		return ['GO_LEFT', 'GO_RIGHT', 'GO_STRAIGHT']
 
-	def TransformMove(self, move, direction):
+	def relativeMove(self, move, direction):
 		if move == 'GO_STRAIGHT':
 			return direction
 
@@ -103,5 +97,3 @@ class QuadrantView:
 			return go_left_direction
 		elif move == 'GO_RIGHT':
 			return Directions.REVERSE[go_left_direction]
-		assert(false)
-		return
