@@ -53,7 +53,15 @@ elif agent == 'SARSA':
 
 # 1 for training and 0 for testing
 training = 1
+
+# Save data?
 write = 0
+
+# Choose the exploration strategy
+# epsilon-greedy = 1 and softmax = 0
+greedy = 1
+# decaying epsilon-greedy?
+decay = 0
 
 if training:
 	file = 'training_'
@@ -102,10 +110,11 @@ with open(file, 'wb') as csvfile:
 				# clock.tick(fps)
 			
 			# Decay epsilon 
-			if count % 500 == 0:
-				# Divide it by 2 every 500 iterations
-				epsilon -= float(epsilon)/2
-				count = 1
+			if decay:
+				if count % 500 == 0:
+					# Divide it by 2 every 500 iterations
+					epsilon -= float(epsilon)/2
+					count = 1
 
 			# Lower bound epsilon by epsilon_l if epsilon is not 0
 			if epsilon < epsilon_l and epsilon != 0:
@@ -127,7 +136,7 @@ with open(file, 'wb') as csvfile:
 			if training:
 				# Choose new action according to Q
 				# and the exploration strategy
-				action = rl.getAction(epsilon, mapped_state, Q)
+				action = rl.getAction(epsilon, mapped_state, Q, greedy)
 				
 				# Observe reward
 				reward = rl.getReward(state, action)
@@ -139,7 +148,7 @@ with open(file, 'wb') as csvfile:
 					rl.updateQ(mapped_state, state, action, reward, Q, blockPos, initial, epsilon) # For SARSA
 
 			elif not training:
-				action = rl.getAction(epsilon, mapped_state, Q)
+				action = rl.getAction(epsilon, mapped_state, Q, greedy)
 
 			initial = False
 			move = QuadrantView.relativeMove(action, direction)
@@ -227,7 +236,7 @@ with open(file, 'wb') as csvfile:
  
 			window.blit(recordRender, (10, 10))
 			window.blit(scoreRender, (10, 40))
-			window.blit(epsilonRender, (270, windowHeight - 50))
+			if greedy: window.blit(epsilonRender, (270, windowHeight - 50))
 			window.blit(iterationRender, (100, windowHeight - 50))
 			window.blit(averageScoreRender, (100, windowHeight - 20))
 

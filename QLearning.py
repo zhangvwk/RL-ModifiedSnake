@@ -33,7 +33,7 @@ class QLearningAlgorithm:
 		return QuadrantView.validMoves()
 
 	# Epsilon-greedy exploration strategy
-	def getAction(self, epsilon, mapped_state, QValues):
+	def getAction(self, epsilon, mapped_state, QValues, greedy):
 
 		# Initialize Q values at 0
 		if mapped_state not in QValues.keys():
@@ -41,24 +41,24 @@ class QLearningAlgorithm:
 			for action_ in self.actions():
 				QValues[mapped_state][action_] = 0
 
-		# if random.random() < epsilon:
-		# 	return random.choice(self.actions())
-		# else:
-		# 	return max((self.getQ(mapped_state, action, QValues), action) \
-		# 							for action in self.actions())[1]
+		# Epsilon-greedy
+		if greedy:
+			if random.random() < epsilon:
+				return random.choice(self.actions())
+			else:
+				return max((self.getQ(mapped_state, action, QValues), action) \
+										for action in self.actions())[1]
 
-		# SOFTMAX NOT WORKING
-		T = 2
-		SUM = sum([math.exp(float(self.getQ(mapped_state, action, QValues))/T) \
-					for action in self.actions()])
-		prob = [float(math.exp(float(self.getQ(mapped_state, action, QValues))/T))/SUM for action in self.actions()]
-		# print prob
-		actions_idx = [0, 1, 2]
-		choices = zip(actions_idx, prob)
-		action_idx = smp.weightedChoice(choices)
-		# action_idx = prob.index(draw)
-		# print self.actions()[action_idx]
-		return self.actions()[action_idx]
+		# Softmax
+		elif not greedy:
+			T = 2
+			SUM = sum([math.exp(float(self.getQ(mapped_state, action, QValues))/T) \
+						for action in self.actions()])
+			prob = [float(math.exp(float(self.getQ(mapped_state, action, QValues))/T))/SUM for action in self.actions()]
+			actions_idx = [0, 1, 2]
+			choices = zip(actions_idx, prob)
+			action_idx = smp.weightedChoice(choices)
+			return self.actions()[action_idx]
 
 
 	def getReward(self, state, action):
