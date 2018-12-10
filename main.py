@@ -55,7 +55,7 @@ elif agent == 'SARSA':
 training = 1
 
 # Save data?
-write = 0
+write = 1
 
 # Choose the exploration strategy
 # epsilon-greedy = 1 and softmax = 0
@@ -81,173 +81,174 @@ scoreList = [0]
 initial = True
 epsilon = epsilon_u # Start epsilon at the upper bound
 
-with open(file, 'wb') as csvfile:
-	while True:
-		if training:
-			# Stopping condition
-			if iteration > trainIters:
-				break
 
+while True:
+	if training:
+		# Stopping condition
+		if iteration > trainIters:
+			break
+
+	elif not training:
+		if iteration > testIters:
+			break
+
+	# Reset frame and initial conditions when time's up
+	frame = 1
+	currentTime = time.clock()
+	x_snake, y_snake, direction, score = [140, 140, 140], [200, 180, 160], 'DOWN', 0
+
+	# While time's not up
+	while frame < timeLimit:
+		if training:
+			if iteration > trainIters:
+				rl.writePolicy(Q, epsilon_u)
+				break
 		elif not training:
 			if iteration > testIters:
 				break
+		# if iteration < 5000:
+			# clock.tick(fps)
+		
+		# Decay epsilon 
+		if decay:
+			if count % 500 == 0:
+				# Divide it by 2 every 500 iterations
+				epsilon -= float(epsilon)/2
+				count = 1
 
-		# Reset frame and initial conditions when time's up
-		frame = 1
-		currentTime = time.clock()
-		x_snake, y_snake, direction, score = [140, 140, 140], [200, 180, 160], 'DOWN', 0
+		# Lower bound epsilon by epsilon_l if epsilon is not 0
+		if epsilon < epsilon_l and epsilon != 0:
+			epsilon = epsilon_l
 
-		# While time's not up
-		while frame < timeLimit:
-			if training:
-				if iteration > trainIters:
-					rl.writePolicy(Q, epsilon_u)
-					break
-			elif not training:
-				if iteration > testIters:
-					break
-			# if iteration < 5000:
-				# clock.tick(fps)
+		if len(scoreList) < 2:
+			averageScore = 0
+		if len(scoreList) >= 2 :
+			averageScore = float(sum(scoreList))/(len(scoreList)-1)
+
+		snakeLogic = GameLogic(applePos, blockPos, x_snake[0], y_snake[0])
+
+		# Observe state
+		state = (x_snake, y_snake, applePos, direction)
+		QuadrantView = smp.QuadrantView()
+		mapped_state = QuadrantView.mapState(x_snake, y_snake, applePos, blockPos, direction)
+
+		# If we want to train the agent
+		if training:
+			# Choose new action according to Q
+			# and the exploration strategy
+			action = rl.getAction(epsilon, mapped_state, Q, greedy)
 			
-			# Decay epsilon 
-			if decay:
-				if count % 500 == 0:
-					# Divide it by 2 every 500 iterations
-					epsilon -= float(epsilon)/2
-					count = 1
+			# Observe reward
+			reward = rl.getReward(state, action)
 
-			# Lower bound epsilon by epsilon_l if epsilon is not 0
-			if epsilon < epsilon_l and epsilon != 0:
-				epsilon = epsilon_l
+			# Update the Q table
+			if agent == 'QL':
+				rl.updateQ(mapped_state, state, action, reward, Q, blockPos, initial) # For Q-Learning
+			elif agent == 'SARSA':
+				rl.updateQ(mapped_state, state, action, reward, Q, blockPos, initial, epsilon) # For SARSA
 
-			if len(scoreList) < 2:
-				averageScore = 0
-			if len(scoreList) >= 2 :
-				averageScore = float(sum(scoreList))/(len(scoreList)-1)
+		elif not training:
+			action = rl.getAction(epsilon, mapped_state, Q, greedy)
 
-			snakeLogic = GameLogic(applePos, blockPos, x_snake[0], y_snake[0])
+		initial = False
+		move = QuadrantView.relativeMove(action, direction)
 
-			# Observe state
-			state = (x_snake, y_snake, applePos, direction)
-			QuadrantView = smp.QuadrantView()
-			mapped_state = QuadrantView.mapState(x_snake, y_snake, applePos, blockPos, direction)
+		direction = move
 
-			# If we want to train the agent
-			if training:
-				# Choose new action according to Q
-				# and the exploration strategy
-				action = rl.getAction(epsilon, mapped_state, Q, greedy)
-				
-				# Observe reward
-				reward = rl.getReward(state, action)
+		# Test if snake hits itself
+		hitItself = False
+		i = len(x_snake) - 1
+		while i >= 3:
+			if x_snake[0] == x_snake[i] and y_snake[0] == y_snake[i]:
+				hitItself = True
+				break
+			i -= 1
 
-				# Update the Q table
-				if agent == 'QL':
-					rl.updateQ(mapped_state, state, action, reward, Q, blockPos, initial) # For Q-Learning
-				elif agent == 'SARSA':
-					rl.updateQ(mapped_state, state, action, reward, Q, blockPos, initial, epsilon) # For SARSA
+		# Snake hits itselfa a wall or an obstacle
+		if hitItself or snakeLogic.collisionObstacle() or snakeLogic.collisionWall():
+			scoreList.append(score)
 
-			elif not training:
-				action = rl.getAction(epsilon, mapped_state, Q, greedy)
-
-			initial = False
-			move = QuadrantView.relativeMove(action, direction)
-
-			direction = move
-
-			# Test if snake hits itself
-			hitItself = False
-			i = len(x_snake) - 1
-			while i >= 3:
-				if x_snake[0] == x_snake[i] and y_snake[0] == y_snake[i]:
-					hitItself = True
-					break
-				i -= 1
-
-			# Snake hits itselfa a wall or an obstacle
-			if hitItself or snakeLogic.collisionObstacle() or snakeLogic.collisionWall():
-				scoreList.append(score)
-
-				if write:
+			if write:
+				with open(file, 'a') as csvfile:
 					# Update the score and iteration in the .csv file
 					filewriter = csv.writer(csvfile, delimiter=',',
 																quotechar='|', quoting=csv.QUOTE_MINIMAL)
 					filewriter.writerow([iteration, score, epsilon, averageScore])
-				
-				x_snake, y_snake, direction, score = [140, 140, 140], [200, 180, 160], 'DOWN', 0
-
-				iteration += 1
-				count += 1
-				timeStart = time.clock()
-				currentTime = time.clock()
-				# Reset the blocks positions
-				blockPos, possiblePos_X, possiblePos_Y = Block(numBlocks).unoccupied()
-				frame = 1
-				
-			# Snake eats an apple
-			if snakeLogic.eatsApple():
-				score += 1
-				x_snake.append(0)
-				y_snake.append(0)
-				# Reset the apple position
-				applePos = Apple(possiblePos_X, possiblePos_Y, x_snake, y_snake).position()
-
-			# Update the snake tail coordinates
-			i = len(x_snake) - 1
-			while i >= 1:
-				x_snake[i] = x_snake[i-1]
-				y_snake[i] = y_snake[i-1]
-				i -= 1
-
-			# Update the snake head coordinates
-			if direction == 'DOWN':
-				y_snake[0] += pixel
-			elif direction == 'RIGHT':
-				x_snake[0] += pixel
-			elif direction == 'UP':
-				y_snake[0] -= pixel
-			elif direction == 'LEFT':
-				x_snake[0] -= pixel
-
-			# Background color	
-			window.fill(BLACK)
-				
-			# Blit all the snake parts
-			for i in range(len(x_snake)):
-				window.blit(snake_part, (x_snake[i], y_snake[i]))
-
-			# Blit the apple
-			window.blit(apple, applePos)
-
-			# Blit all the blocks
-			for i in range(numBlocks):
-				window.blit(block, blockPos[i])
-
-			# Keep track of the highest score
-			# obtained thus far
-			if highestScore < score:
-				highestScore = score
 			
-			scoreRender = f.render('Score: ' + str(score), True, WHITE)
-			recordRender = f.render('Highest score: ' + str(highestScore), True, WHITE)
-			epsilonRender = f.render('Epsilon: ' + str(epsilon), True, WHITE)
-			iterationRender = f.render('Iteration: ' + str(iteration), True, WHITE)
-			averageScoreRender = f.render('Average score: ' + str(averageScore), True, WHITE)
- 
-			window.blit(recordRender, (10, 10))
-			window.blit(scoreRender, (10, 40))
-			if greedy: window.blit(epsilonRender, (270, windowHeight - 50))
-			window.blit(iterationRender, (100, windowHeight - 50))
-			window.blit(averageScoreRender, (100, windowHeight - 20))
+			x_snake, y_snake, direction, score = [140, 140, 140], [200, 180, 160], 'DOWN', 0
 
-			pygame.display.update()
-			frame += 1
+			iteration += 1
+			count += 1
+			timeStart = time.clock()
+			currentTime = time.clock()
+			# Reset the blocks positions
+			blockPos, possiblePos_X, possiblePos_Y = Block(numBlocks).unoccupied()
+			frame = 1
+			
+		# Snake eats an apple
+		if snakeLogic.eatsApple():
+			score += 1
+			x_snake.append(0)
+			y_snake.append(0)
+			# Reset the apple position
+			applePos = Apple(possiblePos_X, possiblePos_Y, x_snake, y_snake).position()
 
+		# Update the snake tail coordinates
+		i = len(x_snake) - 1
+		while i >= 1:
+			x_snake[i] = x_snake[i-1]
+			y_snake[i] = y_snake[i-1]
+			i -= 1
+
+		# Update the snake head coordinates
+		if direction == 'DOWN':
+			y_snake[0] += pixel
+		elif direction == 'RIGHT':
+			x_snake[0] += pixel
+		elif direction == 'UP':
+			y_snake[0] -= pixel
+		elif direction == 'LEFT':
+			x_snake[0] -= pixel
+
+		# Background color	
+		window.fill(BLACK)
+			
+		# Blit all the snake parts
+		for i in range(len(x_snake)):
+			window.blit(snake_part, (x_snake[i], y_snake[i]))
+
+		# Blit the apple
+		window.blit(apple, applePos)
+
+		# Blit all the blocks
+		for i in range(numBlocks):
+			window.blit(block, blockPos[i])
+
+		# Keep track of the highest score
+		# obtained thus far
 		if highestScore < score:
 			highestScore = score
+		
+		scoreRender = f.render('Score: ' + str(score), True, WHITE)
+		recordRender = f.render('Highest score: ' + str(highestScore), True, WHITE)
+		epsilonRender = f.render('Epsilon: ' + str(epsilon), True, WHITE)
+		iterationRender = f.render('Iteration: ' + str(iteration), True, WHITE)
+		averageScoreRender = f.render('Average score: ' + str(averageScore), True, WHITE)
 
-		scoreList.append(score)
-		iteration += 1
-		count += 1
+		window.blit(recordRender, (10, 10))
+		window.blit(scoreRender, (10, 40))
+		if greedy: window.blit(epsilonRender, (270, windowHeight - 50))
+		window.blit(iterationRender, (100, windowHeight - 50))
+		window.blit(averageScoreRender, (100, windowHeight - 20))
+
+		pygame.display.update()
+		frame += 1
+
+	if highestScore < score:
+		highestScore = score
+
+	scoreList.append(score)
+	iteration += 1
+	count += 1
 
 pygame.time.wait(1000)
