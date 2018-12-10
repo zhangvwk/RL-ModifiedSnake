@@ -27,7 +27,7 @@ class Setup:
 	# Learning parameters
 	discount = 0.9
 	alpha = 0.8
-	epsilon_u = 0.0
+	epsilon_u = 0.3
 	epsilon_l = 0.01 # epsilon lower bound
 
 class Block:

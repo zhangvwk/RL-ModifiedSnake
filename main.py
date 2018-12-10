@@ -53,6 +53,7 @@ elif agent == 'SARSA':
 
 # 1 for training and 0 for testing
 training = 1
+write = 0
 
 if training:
 	file = 'training_'
@@ -97,8 +98,8 @@ with open(file, 'wb') as csvfile:
 			elif not training:
 				if iteration > testIters:
 					break
-			if iteration > 5000:
-				clock.tick(fps)
+			# if iteration < 5000:
+				# clock.tick(fps)
 			
 			# Decay epsilon 
 			if count % 500 == 0:
@@ -158,10 +159,11 @@ with open(file, 'wb') as csvfile:
 			if hitItself or snakeLogic.collisionObstacle() or snakeLogic.collisionWall():
 				scoreList.append(score)
 
-				# Update the score and iteration in the .csv file
-				filewriter = csv.writer(csvfile, delimiter=',',
-															quotechar='|', quoting=csv.QUOTE_MINIMAL)
-				filewriter.writerow([iteration, score, epsilon, averageScore])
+				if write:
+					# Update the score and iteration in the .csv file
+					filewriter = csv.writer(csvfile, delimiter=',',
+																quotechar='|', quoting=csv.QUOTE_MINIMAL)
+					filewriter.writerow([iteration, score, epsilon, averageScore])
 				
 				x_snake, y_snake, direction, score = [140, 140, 140], [200, 180, 160], 'DOWN', 0
 
