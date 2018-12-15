@@ -17,6 +17,7 @@ block = pygame.Surface((20,20))
 block.fill(PURPLE)
 numBlocks = 10
 blockPos, possiblePos_X, possiblePos_Y = Block(numBlocks).unoccupied()
+fixed = 0 # 0 for randomized and 1 for fixed obstacles
 
 # Snake
 x_snake = Setup.snakeCoord_X
@@ -28,11 +29,13 @@ discount = Setup.discount
 alpha = Setup.alpha
 epsilon_u = Setup.epsilon_u
 epsilon_l = Setup.epsilon_l
+T = Setup.T
+score_threshold = Setup.score_threshold
 
 # Apple
 apple = pygame.Surface((20, 20))  # size
 apple.fill(GREEN)  # color
-applePos = Apple(possiblePos_X, possiblePos_Y, x_snake, y_snake).position()
+# applePos = Apple(possiblePos_X, possiblePos_Y, x_snake, y_snake).position()
 
 score = 0
 highestScore = 0
@@ -52,14 +55,15 @@ elif agent == 'SARSA':
 	rl = SARSAAlgorithm(discount, alpha, blockPos)
 
 # 1 for training and 0 for testing
-training = 1
+training = 0
 
 # Save data?
 write = 1
+written = 0
 
 # Choose the exploration strategy
 # epsilon-greedy = 1 and softmax = 0
-greedy = 1
+greedy = 0
 # decaying epsilon-greedy?
 decay = 0
 
@@ -70,7 +74,10 @@ elif not training:
 	file = 'testing_'
 	timeLimit = Setup.testing_timeLimit
 
-file += agent + '_' + str(epsilon_u) + '.csv'
+if greedy:
+	file += agent + '_greedy_' + str(epsilon_u) + '.csv'
+elif not greedy:
+	file += agent + '_softmax_' + str(T) + '.csv'
 
 """ GAME EXECUTION """
 
@@ -81,7 +88,6 @@ scoreList = [0]
 initial = True
 epsilon = epsilon_u # Start epsilon at the upper bound
 
-
 while True:
 	if training:
 		# Stopping condition
@@ -91,22 +97,17 @@ while True:
 	elif not training:
 		if iteration > testIters:
 			break
-
+	if written: break
 	# Reset frame and initial conditions when time's up
 	frame = 1
 	currentTime = time.clock()
-	x_snake, y_snake, direction, score = [140, 140, 140], [200, 180, 160], 'DOWN', 0
+	x_snake, y_snake, direction, score = [140, 140, 140], [200, 180, 160], random.choice(Directions.ALL), 0
+	applePos = Apple(possiblePos_X, possiblePos_Y, x_snake, y_snake).position()
 
 	# While time's not up
 	while frame < timeLimit:
-		if training:
-			if iteration > trainIters:
-				rl.writePolicy(Q, epsilon_u)
-				break
-		elif not training:
-			if iteration > testIters:
-				break
-		# if iteration < 5000:
+
+		# if not training:
 			# clock.tick(fps)
 		
 		# Decay epsilon 
@@ -136,7 +137,7 @@ while True:
 		if training:
 			# Choose new action according to Q
 			# and the exploration strategy
-			action = rl.getAction(epsilon, mapped_state, Q, greedy)
+			action = rl.getAction(epsilon, T, mapped_state, Q, greedy)
 			
 			# Observe reward
 			reward = rl.getReward(state, action)
@@ -148,7 +149,7 @@ while True:
 				rl.updateQ(mapped_state, state, action, reward, Q, blockPos, initial, epsilon) # For SARSA
 
 		elif not training:
-			action = rl.getAction(epsilon, mapped_state, Q, greedy)
+			action = rl.getAction(0, T, mapped_state, Q, greedy)
 
 		initial = False
 		move = QuadrantView.relativeMove(action, direction)
@@ -173,16 +174,19 @@ while True:
 					# Update the score and iteration in the .csv file
 					filewriter = csv.writer(csvfile, delimiter=',',
 																quotechar='|', quoting=csv.QUOTE_MINIMAL)
-					filewriter.writerow([iteration, score, epsilon, averageScore])
+					if greedy: filewriter.writerow([iteration, score, epsilon, averageScore])
+					elif not greedy: filewriter.writerow([iteration, score, averageScore])
 			
-			x_snake, y_snake, direction, score = [140, 140, 140], [200, 180, 160], 'DOWN', 0
+			x_snake, y_snake, direction, score = [140, 140, 140], [200, 180, 160], random.choice(Directions.ALL), 0
 
 			iteration += 1
 			count += 1
 			timeStart = time.clock()
 			currentTime = time.clock()
 			# Reset the blocks positions
-			blockPos, possiblePos_X, possiblePos_Y = Block(numBlocks).unoccupied()
+			if not fixed: blockPos, possiblePos_X, possiblePos_Y = Block(numBlocks).unoccupied()
+			applePos = Apple(possiblePos_X, possiblePos_Y, x_snake, y_snake).position()
+
 			frame = 1
 			
 		# Snake eats an apple
@@ -228,6 +232,17 @@ while True:
 		# obtained thus far
 		if highestScore < score:
 			highestScore = score
+		
+		if training:
+			if averageScore > score_threshold:
+			# if iteration > 300:
+				rl.writePolicy(Q, epsilon_u, T, greedy)
+				written = 1
+				break
+		if written: break
+		elif not training:
+			if iteration > testIters:
+				break
 		
 		scoreRender = f.render('Score: ' + str(score), True, WHITE)
 		recordRender = f.render('Highest score: ' + str(highestScore), True, WHITE)

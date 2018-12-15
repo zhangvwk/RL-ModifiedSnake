@@ -33,7 +33,7 @@ class QLearningAlgorithm:
 		return QuadrantView.validMoves()
 
 	# Epsilon-greedy exploration strategy
-	def getAction(self, epsilon, mapped_state, QValues, greedy):
+	def getAction(self, epsilon, T, mapped_state, QValues, greedy):
 
 		# Initialize Q values at 0
 		if mapped_state not in QValues.keys():
@@ -51,7 +51,6 @@ class QLearningAlgorithm:
 
 		# Softmax
 		elif not greedy:
-			T = 2
 			SUM = sum([math.exp(float(self.getQ(mapped_state, action, QValues))/T) \
 						for action in self.actions()])
 			prob = [float(math.exp(float(self.getQ(mapped_state, action, QValues))/T))/SUM for action in self.actions()]
@@ -80,15 +79,15 @@ class QLearningAlgorithm:
 
 		# Snake hits itselfa a wall or an obstacle
 		if hitItself or snakeLogic.collisionObstacle() or snakeLogic.collisionWall():
-			return -100
+			return -10
 			
 		# Snake eats an apple
 		if snakeLogic.eatsApple():
-			return 500
+			return 50
 
 		# Encourage the snake to go to the apple quickly
 		else:
-			return -10
+			return -1
 
 	def getQ(self, mapped_state, action, QValues):
 		return QValues[mapped_state][action]
@@ -155,8 +154,9 @@ class QLearningAlgorithm:
 
 		QValues[mapped_state][action] = q 
 
-	def writePolicy(self, QValues, epsilon_u):
-		policyFile = 'QL_' + str(epsilon_u) + '.policy'
-		with open(policyFile, 'w') as f:
+	def writePolicy(self, QValues, epsilon_u, T, greedy):
+		if greedy: policyFile = 'QL_greedy_' + str(epsilon_u) + '.policy'
+		elif not greedy: policyFile = 'QL_softmax_' + str(T) + '.policy'
+		with open(policyFile, 'wb') as f:
 			f.write(str(QValues))
 		return

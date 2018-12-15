@@ -19,7 +19,7 @@ class Setup:
 
 	trainIters = 50000
 	testIters = 1000
-	training_timeLimit = float('inf')
+	training_timeLimit = 30*60
 	testing_timeLimit = 15*60
 
 	direction = random.choice(Directions.ALL) # Initial direction
@@ -27,8 +27,15 @@ class Setup:
 	# Learning parameters
 	discount = 0.9
 	alpha = 0.8
-	epsilon_u = 0.3
+
+	# Exploration
+	# Epsilon-greedy
+	epsilon_u = 0
 	epsilon_l = 0.01 # epsilon lower bound
+	
+	# Softmax
+	T = 1.0
+	score_threshold = 8
 
 class Block:
 	def __init__(self, numBlocks):
