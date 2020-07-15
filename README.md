@@ -1,5 +1,7 @@
 # Reinforcement Learning for Modified Snake Game
-Repository for my CS221 (Fall 2018) final project. Written in Python.
+Repository for my CS221 (Fall 2018) final project. Written in Python. 
+
+Report: final.pdf
 
 ### Prerequisites
 
